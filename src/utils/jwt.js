@@ -18,7 +18,7 @@ const generateResetToken = () => {
   return crypto.randomBytes(32).toString("hex")
 }
 
-const verifyToken = ({ token }) => {
+const verifyToken = ( token ) => {
   return jwt.verify(token, JWT_SECRET)
 }
 

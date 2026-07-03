@@ -1,6 +1,6 @@
 const { verifyToken } = require("../utils/jwt")
 
-const authMilldleWare = (req, res, next) => {
+const authMiddleWare = (req, res, next) => {
   try {
     const token = req.cookies.token;
     if (!token) {
@@ -23,4 +23,4 @@ const verifyRole = (...roles) => {
   }
 }
 
-module.exports = { authMilldleWare, verifyRole }
+module.exports = { authMiddleWare, verifyRole }
