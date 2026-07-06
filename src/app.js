@@ -10,6 +10,7 @@ app.use(cors({
   credentials: true
 }))
 app.use(cookieParser());
+app.use("/api/donation/webhook", express.raw({ type: "application/json" }));
 app.use(express.json())
 
 app.use("/api", routes)
