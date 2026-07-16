@@ -1,11 +1,48 @@
 const donation = require('../../model/donation.model');
 
 const createDonation = async (donationData) => {
-	return await donation.create(donationData);
+  return await donation.create(donationData);
 }
 
 const getDonationByUserId = async (userId) => {
-	return await donation.find({ userId: userId }).sort({ createdAt: -1 });
+  return await donation.find({ userId: userId }).sort({ createdAt: -1 });
+}
+
+const getUserDonationChartData = async (userId, days) => {
+  let filter = { userId: userId };
+
+  if (days) {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days)
+    filter.createdAt = { $gte: fromDate }
+  }
+  const donations = await donation.find(filter).sort({ createdAt: -1 });
+  return donations.map(item => ({
+    amount: item.amount,
+    createdAt: item.createdAt.toLocaleDateString("en-GB"), // dd/mm/yyyy
+  }));
+}
+
+const getAllDonationsChartData = async (days) => {
+  const filter = {}
+  if (days) {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days)
+    filter.createdAt = { $gte: fromDate }
+  }
+  return await donation.aggregate([
+    {
+      $match: filter
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+        amount: { $sum: "$amount" },
+      }
+    },
+    { $project: { _id: 0, date: "$_id", amount: 1 } },
+    { $sort: { date: 1 } }
+  ])
 }
 
 // const getAllDonations = async () => {
@@ -25,17 +62,17 @@ const getAllDonations = async () => {
         _id: "$userId", // Distinct by userId
         totalContributed: { $sum: "$amount" }, // Kul kitna donate kiya
         donationCount: { $sum: 1 }, // Kitni baar kiya
-        
+
         // Kyunki humne upar sort kiya hai, toh $first lagane se 
         // sabse LATEST record ka amount aur date milega
-        lastDonationAmount: { $first: "$amount" }, 
+        lastDonationAmount: { $first: "$amount" },
         lastDonationDate: { $first: "$createdAt" }
       }
     },
     {
       // Step 3: Users table se name aur email laana
       $lookup: {
-        from: "users", 
+        from: "users",
         localField: "_id",
         foreignField: "_id",
         as: "userDetails"
@@ -64,7 +101,9 @@ const getAllDonations = async () => {
 }
 
 module.exports = {
-	createDonation,
-	getDonationByUserId,
-	getAllDonations
+  createDonation,
+  getDonationByUserId,
+  getAllDonations,
+  getUserDonationChartData,
+  getAllDonationsChartData
 }
