@@ -42,26 +42,6 @@ const createCheckoutSession = async (req, res) => {
   }
 }
 
-// const getUserDonations = async (req, res) => {
-//   try {
-//     const { id: userId } = req?.user;
-    
-//     const [donationList, totalDonation] = await Promise.all([
-//       donationDao.getDonationByUserId(userId),
-//       userDao.getSingleUserTotalDonation(userId)
-//     ]);
-
-//     return res?.status(200).json({ 
-//       data: { donation: donationList, totalDonation }, 
-//       message: "User donations fetched successfully." 
-//     });
-
-//   } catch (error) {
-//     console.error("Get Donations Error:", error);
-//     return res.status(500).json({ message: "Internal server error" });
-//   }
-// }
-
 const getUserDonations = async (req, res) => {
   try {
     // req.user se user ki id aur role dono nikalenge (jaise aapne user.controller me kiya tha)
@@ -132,46 +112,6 @@ const handleWebhook = async (req, res) => {
   
   return res?.status(200).json({ received: true });
 }
-
-// const handleWebhook = async (req, res) => {
-//   const sig = req.headers['stripe-signature'];
-//   let event;
-  
-//   // 1. Log lagayein check karne ke liye
-//   console.log("=== WEBHOOK HIT RECEIVED ===");
-
-//   try {
-//     event = stripe.webhooks.constructEvent(req?.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-//     console.log("Event Type Authenticated:", event?.type); // 2. Check event type
-//   } catch (error) {
-//     console.error("Webhook Signature Error:", error?.message);
-//     return res?.status(400).send(`Webhook Error: ${error?.message}`);
-//   }
-
-//   if (event?.type === 'checkout.session.completed') {
-//     const session = event?.data?.object;
-    
-//     const userId = session?.metadata?.userId;
-//     const amount = parseFloat(session?.metadata?.amount);
-//     const transactionId = session?.payment_intent;
-
-//     console.log("Processing DB insertion for User:", userId, "Amount:", amount);
-
-//     try {
-//       await donationDao?.createDonation({ userId, amount, transactionId, status: "success" });
-      
-//       const currentTotal = await userDao?.getSingleUserTotalDonation(userId);
-//       const newTotal = (currentTotal || 0) + amount;
-
-//       await userDao?.updateUser({ id: userId, payload: { totalDonation: newTotal } });
-//       console.log("DB Update Success!");
-//     } catch (dbErr) {
-//       console.error("Database Error inside Webhook:", dbErr);
-//     }
-//   }
-  
-//   return res?.status(200).json({ received: true });
-// }
 
 module.exports = {
   createCheckoutSession,

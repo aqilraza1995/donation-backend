@@ -12,7 +12,7 @@ const getUserCount = async (req, res) => {
 
     if (userRole === "admin") {
       totalDonationAmount = await dashboardDao.getTotalPlatformDonation()
-     
+      donationChartData = await dashboardDao.getAllDonationChartData(90)
 
     } else {
       totalDonationAmount = await dashboardDao.getSingleUserTotalDonation(userId)
@@ -20,10 +20,10 @@ const getUserCount = async (req, res) => {
 
     }
 
-    const responeData = {userCount, totalDonationAmount, donationChartData}
+    const responeData = { userCount, totalDonationAmount, donationChartData }
 
-    if(userRole === "admin"){
-      responeData.zeroDonationUser =  await dashboardDao.getUserWithZeroDonation()
+    if (userRole === "admin") {
+      responeData.zeroDonationUser = await dashboardDao.getUserWithZeroDonation()
     }
 
     return res?.status(200).json(responeData)
@@ -33,4 +33,26 @@ const getUserCount = async (req, res) => {
   }
 }
 
-module.exports = { getUserCount }
+const getDonationChartDataByDateRange = async (req, res) => {
+  try {
+    const { id: userId, role: userRole } = req?.user
+    let donationChartData = []
+    const days = Number(req.query.days);
+
+    console.log("days =======> ", days)
+
+    if (userRole === "admin") {
+      donationChartData = await dashboardDao?.getAllDonationChartData(days)
+    }
+    else {
+      donationChartData = await dashboardDao?.getSingleUserDonationChartData(userId, days)
+    }
+
+    return res?.status(200).json({ data: donationChartData })
+
+  } catch (error) {
+    return res?.status(500).json({ message: "Internal server error" })
+  }
+}
+
+module.exports = { getUserCount, getDonationChartDataByDateRange }

@@ -27,19 +27,41 @@ const getUserWithZeroDonation = async () => {
   return user.countDocuments({ totalDonation: 0 })
 }
 
-const getSingleUserDonationChartData = async(userId, days)=>{
-  const filter ={userId}
+const getSingleUserDonationChartData = async (userId, days) => {
+  const filter = { userId }
 
-  if(days){
+  if (days) {
     const fromDate = new Date()
-    fromDate.setDate(fromDate.getDate()- days)
-    filter.createdAt={$gte:fromDate}
+    fromDate.setDate(fromDate.getDate() - days)
+    filter.createdAt = { $gte: fromDate }
   }
 
-  const donations = await donation.find(filter).sort({createdAt:-1})
-
-  return donations?.map(item=>({amount:item?.amount, createdAt: item?.createdAt.toLocaleDateString("en-GB")}))
+  const donations = await donation.find(filter).sort({ createdAt: 1 })
+  return donations?.map(item => ({ amount: item?.amount, date: item?.createdAt.toLocaleDateString("en-GB") }))
 }
+
+const getAllDonationChartData = async (days) => {
+  const filter = {}
+  if (days) {
+    const fromDate = new Date()
+    fromDate.setDate(fromDate.getDate() - days)
+    filter.createdAt = { $gte: fromDate }
+  }
+
+  return await donation.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+        amount: { $sum: "$amount" }
+      }
+    },
+    { $project: { _id: 0, date: "$_id", amount: 1 } },
+    { $sort: { date: 1 } }
+  ])
+}
+
+
 
 
 module.exports = {
@@ -47,5 +69,6 @@ module.exports = {
   getTotalPlatformDonation,
   getSingleUserTotalDonation,
   getUserWithZeroDonation,
-  getSingleUserDonationChartData
+  getSingleUserDonationChartData,
+  getAllDonationChartData
 }
