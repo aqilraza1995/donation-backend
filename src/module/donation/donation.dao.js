@@ -8,47 +8,6 @@ const getDonationByUserId = async (userId) => {
   return await donation.find({ userId: userId }).sort({ createdAt: -1 });
 }
 
-const getUserDonationChartData = async (userId, days) => {
-  let filter = { userId: userId };
-
-  if (days) {
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - days)
-    filter.createdAt = { $gte: fromDate }
-  }
-  const donations = await donation.find(filter).sort({ createdAt: -1 });
-  return donations.map(item => ({
-    amount: item.amount,
-    createdAt: item.createdAt.toLocaleDateString("en-GB"), // dd/mm/yyyy
-  }));
-}
-
-const getAllDonationsChartData = async (days) => {
-  const filter = {}
-  if (days) {
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - days)
-    filter.createdAt = { $gte: fromDate }
-  }
-  return await donation.aggregate([
-    {
-      $match: filter
-    },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
-        amount: { $sum: "$amount" },
-      }
-    },
-    { $project: { _id: 0, date: "$_id", amount: 1 } },
-    { $sort: { date: 1 } }
-  ])
-}
-
-// const getAllDonations = async () => {
-// 	return await donation.find({}).populate('userId', 'name email totalDonation').sort({ createdAt: -1 });
-// }
-
 const getAllDonations = async () => {
   return await donation.aggregate([
     {
@@ -104,6 +63,4 @@ module.exports = {
   createDonation,
   getDonationByUserId,
   getAllDonations,
-  getUserDonationChartData,
-  getAllDonationsChartData
 }

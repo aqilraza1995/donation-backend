@@ -20,32 +20,78 @@ const findByResetToken = async ({ resetPasswordToken }) => {
   return await user.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } })
 }
 
-const getTotalUserCount = async () => {
-  const [male, female, other, total] = await Promise.all([
-    user.countDocuments({ gender: "male" }),
-    user.countDocuments({ gender: "female" }),
-    user.countDocuments({ gender: "other" }),
-    user.countDocuments()
-  ])
-  return { male, female, other, total }
-}
-
-const getTotalPlatformDonation = async () => {
-  const result = await user.aggregate([
+const getUsersWithDonation = async ()=>{
+  return await user.aggregate([
     {
-      $group: { _id: null, totalEarned: { $sum: "$totalDonation" } }
+      $match:{
+        role:{$ne:"admin"}
+      }
+    },
+    {
+      $lookup:{
+        from:"donations",
+        let:{userId:"$_id"},
+        pipeline:[
+          {
+            $match:{
+              $expr:{
+                $and:[
+                  {$eq:["$userId", "$$userId"]},
+                 { $eq:["$status", "success"]}
+                ]
+                
+              }
+            }
+          },
+          {$sort:{createdAt:-1}},
+          {$limit:1},
+          {
+            $project:{
+              _id:0,
+              amount:1, 
+              createdAt:1
+            }
+          }
+        ],
+        as: "lastDonation"
+      }
+    },
+    {
+      $project:{
+        _id:1,
+        name:1, 
+        totalDonation:1,
+        lastDonationAmount:{
+          $ifNull:[
+            {$arrayElemAt:["$lastDonation.amount", 0]},
+            0
+          ]
+        },
+        lastDonationDate :{
+          $cond:{
+            if:{
+              $gt:[
+                {$size:"$lastDonation"},
+                0
+              ]
+            },
+            then:{
+              $dateToString:{
+                format:"%d/%m/%Y",
+                date:{
+                  $arrayElemAt:["$lastDonation.createdAt", 0]
+                }
+              }
+            },
+            else:"-"
+          }
+        }
+      }
+    },
+    {
+      $sort:{name:1}
     }
   ])
-  return result?.length ? result[0]?.totalEarned : 0
-}
-
-const getSingleUserTotalDonation = async (userId) => {
-  const result = await user?.findById(userId).select("totalDonation")
-  return result ? result?.totalDonation : 0
-}
-
-const getUserWithZeroDonation = async () => {
-  return await user?.countDocuments({ totalDonation: 0 })
 }
 
 module.exports = {
@@ -54,8 +100,5 @@ module.exports = {
   findUserById,
   updateUser,
   findByResetToken,
-  getTotalUserCount,
-  getTotalPlatformDonation,
-  getSingleUserTotalDonation,
-  getUserWithZeroDonation
+  getUsersWithDonation
 }

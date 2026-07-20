@@ -4,6 +4,6 @@ const {authMiddleWare} = require("../../middleware/auth.middleware")
 
 const router = express?.Router()
 
-router.get("/count", authMiddleWare, userController?.getTotalUserCount)
+router.get("/", authMiddleWare, userController?.getUsersWithDonation )
 
 module.exports = router

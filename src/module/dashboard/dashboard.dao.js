@@ -66,8 +66,6 @@ const lastTenDonations = async()=>{
 }
 
 
-
-
 module.exports = {
   getUserCount,
   getTotalPlatformDonation,
