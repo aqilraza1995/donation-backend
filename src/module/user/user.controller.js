@@ -4,14 +4,30 @@ const donationDao = require("../donation/donation.dao")
 
 const getUsersWithDonation = async (req, res) => {
   try {
-    console.log("controller is call")
     const result = await userDao?.getUsersWithDonation()
-    console.log("result ====> ", result)
     return res?.status(200).json({ data: result })
   } catch (error) {
     res?.status(500).json({ message: "Internal server Error" })
   }
 }
+
+const getUserById = async (req, res) => {
+  try {
+    
+    const {id} = req?.params
+    const userDetails = await userDao?.findUserById(id)
+
+    const donations = await donationDao?.getDonationByUserId(id)
+
+    const result = {userDetails, donations}
+    
+    return res?.status(200).json(result)
+
+  } catch (error) {
+    res?.status(500).json({ message: "Internal server Error" })
+  }
+}
+
 
 // const getUsers = async(req, res)=>{
 //   try {
@@ -22,4 +38,4 @@ const getUsersWithDonation = async (req, res) => {
 //   }
 // }
 
-module.exports = { getUsersWithDonation }
+module.exports = { getUsersWithDonation, getUserById }

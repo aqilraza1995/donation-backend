@@ -8,8 +8,8 @@ const findUserByEmail = async ({ email }) => {
   return await user.findOne({ email })
 }
 
-const findUserById = async ({ id }) => {
-  return await user.findById(id)
+const findUserById = async ( id ) => {
+  return await user.findById(id, "name mobile email gender totalDonation role")
 }
 
 const updateUser = async ({ id, payload }) => {

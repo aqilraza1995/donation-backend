@@ -5,7 +5,7 @@ const createDonation = async (donationData) => {
 }
 
 const getDonationByUserId = async (userId) => {
-  return await donation.find({ userId: userId }).sort({ createdAt: -1 });
+  return await donation.find({ userId: userId }, "amount createdAt").sort({ createdAt: -1 });
 }
 
 const getAllDonations = async () => {
