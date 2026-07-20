@@ -61,6 +61,10 @@ const getAllDonationChartData = async (days) => {
   ])
 }
 
+const lastTenDonations = async()=>{
+  return donation.find() .populate("userId", "name").sort({_id:-1}).limit(10)
+}
+
 
 
 
@@ -70,5 +74,6 @@ module.exports = {
   getSingleUserTotalDonation,
   getUserWithZeroDonation,
   getSingleUserDonationChartData,
-  getAllDonationChartData
+  getAllDonationChartData,
+  lastTenDonations
 }

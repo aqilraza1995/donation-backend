@@ -9,14 +9,14 @@ const getUserCount = async (req, res) => {
     let totalDonationAmount = 0
     let zeroDonationUser = 0
     let donationChartData = undefined
+    let lastTenDonation = []
 
     if (userRole === "admin") {
       totalDonationAmount = await dashboardDao.getTotalPlatformDonation()
-      donationChartData = await dashboardDao.getAllDonationChartData(90)
-
+      donationChartData = await dashboardDao.getAllDonationChartData(7)
     } else {
       totalDonationAmount = await dashboardDao.getSingleUserTotalDonation(userId)
-      donationChartData = await dashboardDao?.getSingleUserDonationChartData(userId, 90)
+      donationChartData = await dashboardDao?.getSingleUserDonationChartData(userId, 7)
 
     }
 
@@ -24,6 +24,7 @@ const getUserCount = async (req, res) => {
 
     if (userRole === "admin") {
       responeData.zeroDonationUser = await dashboardDao.getUserWithZeroDonation()
+      responeData.lastTenDonation = await dashboardDao?.lastTenDonations()
     }
 
     return res?.status(200).json(responeData)
@@ -38,8 +39,6 @@ const getDonationChartDataByDateRange = async (req, res) => {
     const { id: userId, role: userRole } = req?.user
     let donationChartData = []
     const days = Number(req.query.days);
-
-    console.log("days =======> ", days)
 
     if (userRole === "admin") {
       donationChartData = await dashboardDao?.getAllDonationChartData(days)
