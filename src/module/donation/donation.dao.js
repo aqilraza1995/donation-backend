@@ -12,7 +12,7 @@ const getDonations = (userId) => {
   return donation.find({ userId }, "amount createdAt").sort({ createdAt: -1 })
 }
 
-module.exports = {
+module.exports = {  
   createDonation,
   getDonationByUserId,
   getDonations,

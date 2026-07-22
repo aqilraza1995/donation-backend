@@ -4,8 +4,17 @@ const donationDao = require("../donation/donation.dao")
 
 const getUsersWithDonation = async (req, res) => {
   try {
-    const result = await userDao?.getUsersWithDonation()
-    return res?.status(200).json({ data: result })
+    
+    const { page = 1, rowPerPage = 10, search = "", order = "asc", orderBy = "name" } = req?.query
+    const result = await userDao?.getUsersWithDonation({
+      page: +page,
+      rowPerPage: +rowPerPage,
+      search,
+      order,
+      orderBy
+    })
+    return res?.status(200).json( result )
+
   } catch (error) {
     res?.status(500).json({ message: "Internal server Error" })
   }
@@ -13,14 +22,14 @@ const getUsersWithDonation = async (req, res) => {
 
 const getUserById = async (req, res) => {
   try {
-    
-    const {id} = req?.params
+
+    const { id } = req?.params
     const userDetails = await userDao?.findUserById(id)
 
     const donations = await donationDao?.getDonationByUserId(id)
 
-    const result = {userDetails, donations}
-    
+    const result = { userDetails, donations }
+
     return res?.status(200).json(result)
 
   } catch (error) {

@@ -8,7 +8,7 @@ const findUserByEmail = async ({ email }) => {
   return await user.findOne({ email })
 }
 
-const findUserById = async ( id ) => {
+const findUserById = async (id) => {
   return await user.findById(id, "name mobile email gender totalDonation role")
 }
 
@@ -20,36 +20,49 @@ const findByResetToken = async ({ resetPasswordToken }) => {
   return await user.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } })
 }
 
-const getUsersWithDonation = async ()=>{
-  return await user.aggregate([
+const getUsersWithDonation = async ({ page, rowPerPage, search, order, orderBy }) => {
+
+  const skip = (page - 1) * rowPerPage
+  const matchStage = { role: { $ne: "admin" } }
+
+  if (search) {
+    matchStage.name = {
+      $regex: search,
+      $options: "i"
+    }
+  }
+
+  const sortStage = {
+    [orderBy]: order === "asc" ? 1 : -1
+  }
+
+  const result = await user.aggregate([
     {
-      $match:{
-        role:{$ne:"admin"}
-      }
+      $match: matchStage
     },
     {
-      $lookup:{
-        from:"donations",
-        let:{userId:"$_id"},
-        pipeline:[
+      $lookup: {
+        from: "donations",
+        let: { userId: "$_id" },
+        pipeline: [
           {
-            $match:{
-              $expr:{
-                $and:[
-                  {$eq:["$userId", "$$userId"]},
-                 { $eq:["$status", "success"]}
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$userId", "$$userId"] },
+                  { $eq: ["$status", "success"] }
                 ]
-                
+
               }
             }
           },
-          {$sort:{createdAt:-1}},
-          {$limit:1},
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
           {
-            $project:{
-              _id:0,
-              amount:1, 
-              createdAt:1
+            $project: {
+              _id: 0,
+              amount: 1,
+              createdAt: 1
             }
           }
         ],
@@ -57,41 +70,54 @@ const getUsersWithDonation = async ()=>{
       }
     },
     {
-      $project:{
-        _id:1,
-        name:1, 
-        totalDonation:1,
-        lastDonationAmount:{
-          $ifNull:[
-            {$arrayElemAt:["$lastDonation.amount", 0]},
-            0
-          ]
+      $project: {
+        _id: 1,
+        name: 1,
+        totalDonation: 1,
+        lastDonationAmount: {
+          $ifNull: [{ $arrayElemAt: ["$lastDonation.amount", 0] }, 0]
         },
-        lastDonationDate :{
-          $cond:{
-            if:{
-              $gt:[
-                {$size:"$lastDonation"},
-                0
-              ]
+        lastDonationDate: {
+          $cond: {
+            if: {
+              $gt: [{ $size: "$lastDonation" }, 0]
             },
-            then:{
-              $dateToString:{
-                format:"%d/%m/%Y",
-                date:{
-                  $arrayElemAt:["$lastDonation.createdAt", 0]
+            then: {
+              $dateToString: {
+                format: "%d/%m/%Y",
+                date: {
+                  $arrayElemAt: ["$lastDonation.createdAt", 0]
                 }
               }
             },
-            else:"-"
+            else: "-"
           }
         }
       }
     },
     {
-      $sort:{name:1}
+      $facet: {
+        data: [
+          { $sort: sortStage },
+          { $skip: skip },
+          { $limit: rowPerPage }
+        ],
+        totalCount: [{ $count: "count" }]
+      }
     }
   ])
+  const users = result[0]?.data
+  const totalRecords = result[0]?.totalCount[0]?.count || 0
+
+  return {
+    data: users,
+    pagination: {
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / rowPerPage),
+      currentPage: page,
+      rowPerPage
+    }
+  }
 }
 
 module.exports = {
