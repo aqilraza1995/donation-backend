@@ -5,10 +5,19 @@ const cookieParser = require("cookie-parser")
 
 const app = express();
 
+// app.use(cors({
+//  origin: [
+//     "http://localhost:3000",
+//     "https://your-next-app.vercel.app"
+//   ],
+//   credentials: true
+// }))
+
 app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
+  origin:true,
+  credentials:true
 }))
+
 app.use(cookieParser());
 app.use("/api/donation/webhook", express.raw({ type: "application/json" }));
 app.use(express.json())
