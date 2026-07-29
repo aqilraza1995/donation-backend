@@ -73,8 +73,17 @@ const getDonations = async (req, res) => {
   try {
 
     const { id: userId } = req?.user
-    const result = await donationDao?.getDonations(userId)
-    return res?.status(200).json({ data: result })
+
+
+ const page = req?.query?.page || 1
+    const rowPerPage = req?.query?.rowPerPage || 10
+    const skip = (page - 1) * rowPerPage
+    const order = req?.query?.order || "desc"
+    const orderBy = req?.query?.orderBy || "createdAt"
+    const search = req?.query?.search || ""
+    
+    const donations = await donationDao?.getDonationByUserId( userId, { rowPerPage, skip, order, orderBy, page, search })
+    return res?.status(200).json({ data: donations })
 
   } catch (error) {
     return res?.status(500).json({ message: "Internal server error" })
