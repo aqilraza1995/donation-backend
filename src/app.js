@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser")
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(cors({
  origin: [
     "http://localhost:3000",
@@ -12,12 +14,6 @@ app.use(cors({
   ],
   credentials: true
 }))
-
-
-// app.use(cors({
-//   origin:true,
-//   credentials:true
-// }))
 
 app.use(cookieParser());
 app.use("/api/donation/webhook", express.raw({ type: "application/json" }));

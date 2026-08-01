@@ -35,7 +35,15 @@ const login = async (req, res) => {
     }
 
     const token = generateToken({ id: user._id, role: user.role })
-    res?.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 7 * 24 * 60 * 60 * 1000 })
+    res?.cookie(
+      "token", token,
+      {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      })
+      
     const userObj = user.toObject()
 
     const { password, ...userWithoutPassword } = userObj
