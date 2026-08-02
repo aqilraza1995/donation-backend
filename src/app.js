@@ -10,7 +10,7 @@ app.set("trust proxy", 1);
 app.use(cors({
  origin: [
     "http://localhost:3000",
-    "https://your-next-app.vercel.app"
+    "https://donation-next-web.vercel.app"
   ],
   credentials: true
 }))
