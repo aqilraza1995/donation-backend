@@ -35,15 +35,15 @@ const login = async (req, res) => {
     }
 
     const token = generateToken({ id: user._id, role: user.role })
-    res?.cookie(
-      "token", token,
-      {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      })
-      
+    const isProduction = process.env.NODE_ENV === "production"
+    res?.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
     const userObj = user.toObject()
 
     const { password, ...userWithoutPassword } = userObj
@@ -58,10 +58,12 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
+    const isProduction = process.env.NODE_ENV === "production"
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
       sameSite: "lax",
+      path: "/",
     })
     return res.status(200).json({ message: "Logout successfully" })
   } catch (error) {
