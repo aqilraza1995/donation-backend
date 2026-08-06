@@ -2,8 +2,12 @@ const { verifyToken } = require("../utils/jwt")
 
 const authMiddleWare = (req, res, next) => {
   try {
-    const token = req.cookies.token;
-    if (!token) {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const token = (authHeader && authHeader.startsWith("Bearer "))
+      ? authHeader.split(" ")[1]
+      : req?.cookies?.token;
+
+    if (!token || token === "undefined" || token === "null") {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     const decode = verifyToken(token)

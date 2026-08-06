@@ -8,11 +8,12 @@ const app = express();
 app.set("trust proxy", 1);
 
 app.use(cors({
- origin: [
+  origin: [
     "http://localhost:3000",
     "https://donation-next-web.vercel.app"
   ],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "stripe-signature"]
 }))
 
 app.use(cookieParser());

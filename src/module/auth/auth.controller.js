@@ -26,6 +26,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const user = await findUserByEmail({ email: req?.body?.email })
+    console.log("user ===== > ", user)
     if (!user) {
       return res?.status(400).json({ message: "Invalid credential" })
     }
@@ -35,21 +36,17 @@ const login = async (req, res) => {
     }
 
     const token = generateToken({ id: user._id, role: user.role })
-    const isProduction = process.env.NODE_ENV === "production"
-    res?.cookie("token", token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-
+    console.log("token generated =======>", token)
     const userObj = user.toObject()
-
     const { password, ...userWithoutPassword } = userObj
 
-    const data = { user: userWithoutPassword }
-    return res?.status(200).json({ message: "User login successfully", data: data.user })
+    return res?.status(200).json({
+      message: "User login successfully",
+      data: {
+        user: userWithoutPassword,
+        token: token
+      }
+    })
 
   } catch (error) {
     return res?.status(500).json({ message: "Internal server error" })
@@ -58,13 +55,6 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    const isProduction = process.env.NODE_ENV === "production"
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-    })
     return res.status(200).json({ message: "Logout successfully" })
   } catch (error) {
     return res?.status(500).json({ message: "Internal server error" })

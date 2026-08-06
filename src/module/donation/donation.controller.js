@@ -20,7 +20,7 @@ const createCheckoutSession = async (req, res) => {
             product_data: {
               name: "Project Donation",
             },
-            unit_amount: amount * 100,
+            unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
         },
@@ -29,6 +29,12 @@ const createCheckoutSession = async (req, res) => {
       metadata: {
         userId: userId.toString(),
         amount: amount.toString()
+      },
+      payment_intent_data: {
+        metadata: {
+          userId: userId.toString(),
+          amount: amount.toString()
+        }
       },
       success_url: `${process.env.CLIENT_URL}/dashboard?success=true`,
       cancel_url: `${process.env.CLIENT_URL}/dashboard?canceled=true`,
@@ -46,8 +52,15 @@ const handleWebhook = async (req, res) => {
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req?.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    const payload = Buffer.isBuffer(req.body)
+      ? req.body
+      : typeof req.body === "string"
+        ? req.body
+        : JSON.stringify(req.body);
+
+    event = stripe.webhooks.constructEvent(payload, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (error) {
+    console.error("Stripe Webhook Verification Failed:", error?.message);
     return res?.status(400).send(`Webhook Error: ${error?.message}`);
   }
 
@@ -56,14 +69,18 @@ const handleWebhook = async (req, res) => {
 
     const userId = session?.metadata?.userId;
     const amount = parseFloat(session?.metadata?.amount);
-    const transactionId = session?.payment_intent;
+    const transactionId = typeof session?.payment_intent === 'string'
+      ? session.payment_intent
+      : session?.id || `txn_${Date.now()}`;
 
-    await donationDao?.createDonation({ userId, amount, transactionId, status: "success" });
+    if (userId && !isNaN(amount)) {
+      await donationDao?.createDonation({ userId, amount, transactionId, status: "success" });
 
-    const currentTotal = await userDao?.getSingleUserTotalDonation(userId);
-    const newTotal = (currentTotal || 0) + amount;
+      const currentTotal = await userDao?.getSingleUserTotalDonation(userId);
+      const newTotal = (currentTotal || 0) + amount;
 
-    await userDao?.updateUser({ id: userId, payload: { totalDonation: newTotal } });
+      await userDao?.updateUser({ id: userId, payload: { totalDonation: newTotal } });
+    }
   }
 
   return res?.status(200).json({ received: true });
@@ -75,14 +92,14 @@ const getDonations = async (req, res) => {
     const { id: userId } = req?.user
 
 
- const page = req?.query?.page || 1
+    const page = req?.query?.page || 1
     const rowPerPage = req?.query?.rowPerPage || 10
     const skip = (page - 1) * rowPerPage
     const order = req?.query?.order || "desc"
     const orderBy = req?.query?.orderBy || "createdAt"
     const search = req?.query?.search || ""
-    
-    const donations = await donationDao?.getDonationByUserId( userId, { rowPerPage, skip, order, orderBy, page, search })
+
+    const donations = await donationDao?.getDonationByUserId(userId, { rowPerPage, skip, order, orderBy, page, search })
     return res?.status(200).json({ data: donations })
 
   } catch (error) {
